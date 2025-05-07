@@ -94,7 +94,7 @@ function App() {
         const newChainId = parseInt(chainId, 16);
         console.log('Chain changed:', { chainId, newChainId });
         if (newChainId !== 1) {
-          setNetworkError(`Network changed to chainId ${newChainId}. Please switch to Ethereum Mainnet and remove unknown networks from MetaMask.`);
+          setNetworkError(`Network changed to chainId ${newChainId}. Please switch to Ethereum Mainnet in MetaMask (Settings > Networks) and remove any unknown networks, especially chainId 1936529372.`);
         } else {
           setNetworkError('');
           if (account) connectWallet();
@@ -127,12 +127,12 @@ function App() {
           });
           const newNetwork = await web3Provider.getNetwork();
           if (newNetwork.chainId !== 1) {
-            setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually and remove chainId 1936529372 if present.');
+            setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually in MetaMask (Settings > Networks) and remove chainId 1936529372 if present.');
             return;
           }
         } catch (switchError) {
           console.error('Network switch error:', switchError);
-          setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually and remove chainId 1936529372 if present.');
+          setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually in MetaMask (Settings > Networks) and remove chainId 1936529372 if present.');
           return;
         }
       }
