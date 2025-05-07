@@ -38,6 +38,7 @@ const UserInfo = ({ contract, account }) => {
       <Box p={4}>
         <Heading size="md" mb={4}>Your PLSTR Info</Heading>
         <Stack spacing={3}>
+          <Text fontSize="md">Connected Address: {account}</Text>
           <Text fontSize="md">PLSTR Balance: {plstrBalance}</Text>
           <Text fontSize="md">Redeemable VPLS: {redeemableVPLS}</Text>
           <Text fontSize="md">Contract VPLS Balance: {contractBalance}</Text>
