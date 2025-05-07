@@ -5,8 +5,8 @@ import { CONTRACT_ADDRESS, CONTRACT_ABI, INFURA_URL } from './config';
 import Header from './components/Header';
 import Disclaimer from './components/Disclaimer';
 import UserInfo from './components/UserInfo';
-import IssueShares from './components/IssueShares';
-import RedeemShares from './components/RedeemShares';
+import IssuePLSTR from './components/IssuePLSTR';
+import RedeemPLSTR from './components/RedeemPLSTR';
 import AdminPanel from './components/AdminPanel';
 import TransactionHistory from './components/TransactionHistory';
 
@@ -19,8 +19,47 @@ const theme = extendTheme({
   styles: {
     global: {
       body: {
-        bg: 'gray.800',
+        bg: 'black',
         color: 'white',
+      },
+    },
+  },
+  colors: {
+    brand: {
+      button: 'gray.700',
+      link: 'teal.300',
+    },
+  },
+  components: {
+    Button: {
+      baseStyle: {
+        bg: 'brand.button',
+        color: 'white',
+        _hover: { bg: 'gray.600' },
+        borderRadius: 'md',
+        boxShadow: 'sm',
+      },
+    },
+    Input: {
+      baseStyle: {
+        field: {
+          bg: 'gray.900',
+          color: 'white',
+          borderColor: 'gray.700',
+          _hover: { borderColor: 'gray.600' },
+          _focus: { borderColor: 'teal.300', boxShadow: '0 0 0 1px teal.300' },
+        },
+      },
+    },
+    Card: {
+      baseStyle: {
+        container: {
+          bg: 'gray.900',
+          borderColor: 'gray.700',
+          borderWidth: '1px',
+          borderRadius: 'md',
+          p: 4,
+        },
       },
     },
   },
@@ -48,7 +87,23 @@ function App() {
 
   useEffect(() => {
     initializeProvider();
-  }, []);
+    if (window.ethereum) {
+      window.ethereum.on('chainChanged', (chainId) => {
+        console.log('Chain changed:', chainId);
+        if (parseInt(chainId, 16) !== 1) {
+          setNetworkError('Network changed. Please switch back to Ethereum Mainnet.');
+        } else {
+          setNetworkError('');
+          if (account) connectWallet(); // Reconnect if network is correct
+        }
+      });
+    }
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeAllListeners('chainChanged');
+      }
+    };
+  }, [account]);
 
   const connectWallet = async () => {
     if (!window.ethereum) {
@@ -59,23 +114,23 @@ function App() {
     try {
       const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
       const network = await web3Provider.getNetwork();
+      console.log('Detected network:', network);
       if (network.chainId !== 1) {
-        setNetworkError('Please switch to Ethereum Mainnet in MetaMask');
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: '0x1' }],
           });
-          setNetworkError('');
         } catch (switchError) {
           console.error('Network switch error:', switchError);
-          setNetworkError('Failed to switch to Ethereum Mainnet. Please do it manually in MetaMask.');
+          setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually in MetaMask.');
           return;
         }
       }
       await web3Provider.send('eth_requestAccounts', []);
       const signer = web3Provider.getSigner();
       const account = await signer.getAddress();
+      console.log('Connected account:', account);
       setProvider(web3Provider);
       setSigner(signer);
       setAccount(account);
@@ -93,43 +148,43 @@ function App() {
 
   return (
     <ChakraProvider theme={theme}>
-      <Box p={4} maxW="800px" mx="auto">
+      <Box p={6} maxW="900px" mx="auto">
         <Header account={account} connectWallet={connectWallet} />
-        <Text mb={4}>
-          Contract Address:{' '}
+        <Text fontSize="md" mb={6}>
+          PulseStrategy Contract:{' '}
           <Link
             href={`https://etherscan.io/address/${CONTRACT_ADDRESS}`}
             isExternal
-            color="blue.300"
+            color="brand.link"
           >
             {CONTRACT_ADDRESS}
           </Link>
         </Text>
         {networkError && (
-          <Alert status="error" mb={4}>
+          <Alert status="error" mb={6} borderRadius="md">
             <AlertIcon />
             {networkError}
           </Alert>
         )}
         {connectionError && (
-          <Alert status="error" mb={4}>
+          <Alert status="error" mb={6} borderRadius="md">
             <AlertIcon />
             {connectionError}
           </Alert>
         )}
         {account ? (
           <>
-            <Text mb={4}>Connected: {account}</Text>
+            <Text fontSize="md" mb={6}>Connected: {account}</Text>
             <UserInfo contract={contract} account={account} />
-            <IssueShares contract={contract} account={account} signer={signer} />
-            <RedeemShares contract={contract} account={account} />
+            <IssuePLSTR contract={contract} account={account} signer={signer} />
+            <RedeemPLSTR contract={contract} account={account} signer={signer} />
             {isStrategyController && (
               <AdminPanel contract={contract} account={account} signer={signer} />
             )}
             <TransactionHistory contract={contract} account={account} />
           </>
         ) : (
-          <Button colorScheme="blue" onClick={connectWallet}>
+          <Button onClick={connectWallet} size="lg">
             Connect MetaMask
           </Button>
         )}
