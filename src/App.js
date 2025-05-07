@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChakraProvider, Box, Button, Alert, AlertIcon, extendTheme } from '@chakra-ui/react';
 import { ethers } from 'ethers';
-import { RPC_URL, CONTRACT_ADDRESS, CONTRACT_ABI } from './config';
+import { RPC_URL, CONTRACT_ADDRESS, STAKED_PLS_ADDRESS } from './config';
+import PulseStrategyABI from './abi/PulseStrategy.json';
 import Header from './components/Header';
 import Disclaimer from './components/Disclaimer';
 import UserInfo from './components/UserInfo';
@@ -89,14 +90,20 @@ function App() {
       console.log('Provider connected successfully');
       setProvider(tempProvider);
       try {
-        const tempContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, tempProvider);
+        if (!PulseStrategyABI || PulseStrategyABI.length === 0) {
+          console.error('ABI is empty or invalid');
+          setConnectionError('Contract ABI is invalid. Please update src/abi/PulseStrategy.json with the correct ABI.');
+          return;
+        }
+        const tempContract = new ethers.Contract(CONTRACT_ADDRESS, PulseStrategyABI, tempProvider);
         // Test contract with a simple call
+        console.log('Testing contract with totalSupply call...');
         await tempContract.totalSupply();
         setContract(tempContract);
         console.log('Contract initialized successfully');
       } catch (contractError) {
         console.error('Contract initialization failed:', contractError.message);
-        setConnectionError('Failed to initialize contract. Please check the contract address or ABI.');
+        setConnectionError(`Failed to initialize contract: ${contractError.message}. Please check the contract address (${CONTRACT_ADDRESS}) or ABI in src/abi/PulseStrategy.json.`);
       }
     } catch (error) {
       console.error('Provider initialization failed:', error.message);
@@ -162,7 +169,7 @@ function App() {
       setAccount(account);
       setNetworkError('');
       setConnectionError('');
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, PulseStrategyABI, signer);
       setContract(contract);
       const owner = await contract.owner();
       setIsStrategyController(account.toLowerCase() === owner.toLowerCase());
