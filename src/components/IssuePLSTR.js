@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Button, FormControl, FormLabel, Input, Text, VStack, useToast } from '@chakra-ui/react';
 import { ethers } from 'ethers';
 import ERC20ABI from '../abi/ERC20.json';
-import { STAKED_PLS_ADDRESS } from '../config';
+import { STAKED_PLS_ADDRESS, RPC_URL } from '../config';
 
 function IssuePLSTR({ contract, account, signer }) {
   const [amount, setAmount] = useState('');
@@ -13,16 +13,27 @@ function IssuePLSTR({ contract, account, signer }) {
   const toast = useToast();
 
   const fetchVplsBalance = async () => {
-    if (!account || !signer) return;
+    if (!account) {
+      console.log('No account connected for VPLS balance fetch');
+      setVplsBalance(null);
+      return;
+    }
     try {
-      const vplsContract = new ethers.Contract(STAKED_PLS_ADDRESS, ERC20ABI, signer);
+      let provider = signer || new ethers.providers.JsonRpcProvider(RPC_URL);
+      console.log('Fetching VPLS balance for account:', account, 'with provider:', provider.connection.url);
+      const vplsContract = new ethers.Contract(STAKED_PLS_ADDRESS, ERC20ABI, provider);
       const balance = await vplsContract.balanceOf(account);
       const decimals = await vplsContract.decimals();
       const formattedBalance = ethers.utils.formatUnits(balance, decimals);
-      console.log('VPLS Balance:', formattedBalance);
+      console.log('VPLS Balance fetched:', formattedBalance, 'VPLS');
       setVplsBalance(formattedBalance);
     } catch (error) {
-      console.error('Error fetching VPLS balance:', error.message);
+      console.error('Error fetching VPLS balance:', {
+        message: error.message,
+        code: error.code,
+        data: error.data,
+        stack: error.stack
+      });
       setVplsBalance('Error');
       toast({
         title: 'Error',
