@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Heading, Input, Button } from '@chakra-ui/react';
+import { Box, Heading, Input, Button, Card, Stack } from '@chakra-ui/react';
 
 const TransferOwnership = ({ contract, account }) => {
   const [newController, setNewController] = useState('');
@@ -17,18 +17,22 @@ const TransferOwnership = ({ contract, account }) => {
   };
 
   return (
-    <Box mb={4}>
-      <Heading size="sm" mb={2}>Transfer Ownership</Heading>
-      <Input
-        placeholder="New Controller Address"
-        value={newController}
-        onChange={(e) => setNewController(e.target.value)}
-        mb={2}
-      />
-      <Button colorScheme="blue" onClick={handleTransfer} isDisabled={!newController}>
-        Transfer Ownership
-      </Button>
-    </Box>
+    <Card mb={4}>
+      <Box p={4}>
+        <Heading size="sm" mb={4}>Transfer Ownership</Heading>
+        <Stack spacing={3}>
+          <Input
+            placeholder="New Controller Address"
+            value={newController}
+            onChange={(e) => setNewController(e.target.value)}
+            size="md"
+          />
+          <Button onClick={handleTransfer} isDisabled={!newController} size="md">
+            Transfer Ownership
+          </Button>
+        </Stack>
+      </Box>
+    </Card>
   );
 };
 
