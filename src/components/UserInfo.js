@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Box, Heading, Text } from '@chakra-ui/react';
+import { Box, Heading, Text, Card, Stack } from '@chakra-ui/react';
 import { ethers } from 'ethers';
 
 const UserInfo = ({ contract, account }) => {
-  const [shareBalance, setShareBalance] = useState('0');
-  const [redeemablePLS, setRedeemablePLS] = useState('0');
+  const [plstrBalance, setPlstrBalance] = useState('0');
+  const [redeemableVPLS, setRedeemableVPLS] = useState('0');
   const [contractBalance, setContractBalance] = useState('0');
   const [issuancePeriod, setIssuancePeriod] = useState('0');
   const [vplsRatio, setVplsRatio] = useState('0');
@@ -14,10 +14,10 @@ const UserInfo = ({ contract, account }) => {
       if (contract && account) {
         try {
           const balance = await contract.balanceOf(account);
-          setShareBalance(ethers.utils.formatEther(balance));
+          setPlstrBalance(ethers.utils.formatEther(balance));
 
           const redeemable = await contract.getRedeemableStakedPLS(account, balance);
-          setRedeemablePLS(ethers.utils.formatEther(redeemable));
+          setRedeemableVPLS(ethers.utils.formatEther(redeemable));
 
           const { contractBalance: bal, remainingIssuancePeriod: period } = await contract.getContractInfo();
           setContractBalance(ethers.utils.formatEther(bal));
@@ -34,14 +34,18 @@ const UserInfo = ({ contract, account }) => {
   }, [contract, account]);
 
   return (
-    <Box mb={6}>
-      <Heading size="md" mb={2}>Your Info</Heading>
-      <Text>PLSTR Balance: {shareBalance}</Text>
-      <Text>Redeemable VPLS: {redeemablePLS}</Text>
-      <Text>Contract VPLS Balance: {contractBalance}</Text>
-      <Text>Remaining Issuance Period: {issuancePeriod} seconds</Text>
-      <Text>VPLS Backing Ratio: {vplsRatio}</Text>
-    </Box>
+    <Card mb={6}>
+      <Box p={4}>
+        <Heading size="md" mb={4}>Your PLSTR Info</Heading>
+        <Stack spacing={3}>
+          <Text fontSize="md">PLSTR Balance: {plstrBalance}</Text>
+          <Text fontSize="md">Redeemable VPLS: {redeemableVPLS}</Text>
+          <Text fontSize="md">Contract VPLS Balance: {contractBalance}</Text>
+          <Text fontSize="md">Remaining Issuance Period: {issuancePeriod} seconds</Text>
+          <Text fontSize="md">VPLS Backing Ratio: {vplsRatio}</Text>
+        </Stack>
+      </Box>
+    </Card>
   );
 };
 
