@@ -1,104 +1,146 @@
-import { useState, useEffect } from 'react';
-import { Box, Heading, Input, Button, Text, Card, Stack } from '@chakra-ui/react';
+import React, { useState, useEffect } from 'react';
+import { Box, Button, FormControl, FormLabel, Input, Text, VStack, useToast } from '@chakra-ui/react';
 import { ethers } from 'ethers';
-import { STAKED_PLS_ADDRESS } from '../config';
 import ERC20ABI from '../abi/ERC20.json';
+import { STAKED_PLS_ADDRESS } from '../config';
 
-const IssuePLSTR = ({ contract, account, signer }) => {
+function IssuePLSTR({ contract, account, signer }) {
   const [amount, setAmount] = useState('');
-  const [approvalNeeded, setApprovalNeeded] = useState(false);
-  const [plstrReceived, setPlstrReceived] = useState('0');
-  const [fee, setFee] = useState('0');
-  const [vplsBalance, setVplsBalance] = useState('0');
+  const [vplsBalance, setVplsBalance] = useState(null);
+  const [shares, setShares] = useState('');
+  const [fee, setFee] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const toast = useToast();
+
+  const fetchVplsBalance = async () => {
+    if (!account || !signer) return;
+    try {
+      const vplsContract = new ethers.Contract(STAKED_PLS_ADDRESS, ERC20ABI, signer);
+      const balance = await vplsContract.balanceOf(account);
+      const decimals = await vplsContract.decimals();
+      const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+      console.log('VPLS Balance:', formattedBalance);
+      setVplsBalance(formattedBalance);
+    } catch (error) {
+      console.error('Error fetching VPLS balance:', error.message);
+      setVplsBalance('Error');
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch VPLS balance. Check console for details.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const calculateShares = async () => {
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+      setShares('');
+      setFee('');
+      return;
+    }
+    try {
+      const parsedAmount = ethers.utils.parseUnits(amount, 18);
+      const [sharesReceived, feeAmount] = await contract.calculateSharesReceived(parsedAmount);
+      setShares(ethers.utils.formatUnits(sharesReceived, 18));
+      setFee(ethers.utils.formatUnits(feeAmount, 18));
+    } catch (error) {
+      console.error('Error calculating shares:', error.message);
+      setShares('Error');
+      setFee('Error');
+      toast({
+        title: 'Error',
+        description: 'Failed to calculate shares. Check console for details.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleIssueShares = async () => {
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+      toast({
+        title: 'Invalid Amount',
+        description: 'Please enter a valid amount.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const parsedAmount = ethers.utils.parseUnits(amount, 18);
+      const tx = await contract.issueShares(parsedAmount);
+      await tx.wait();
+      toast({
+        title: 'Success',
+        description: 'Shares issued successfully!',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+      setAmount('');
+      setShares('');
+      setFee('');
+      fetchVplsBalance();
+    } catch (error) {
+      console.error('Error issuing shares:', error.message);
+      toast({
+        title: 'Error',
+        description: 'Failed to issue shares. Check console for details.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const checkApproval = async () => {
-      if (contract && account && signer && amount) {
-        const stakedPLS = new ethers.Contract(STAKED_PLS_ADDRESS, ERC20ABI, signer);
-        const allowance = await stakedPLS.allowance(account, contract.address);
-        const amountWei = ethers.utils.parseEther(amount || '0');
-        setApprovalNeeded(allowance.lt(amountWei));
-      }
-    };
-    const calculatePLSTR = async () => {
-      if (contract && amount) {
-        try {
-          const [plstr, fee] = await contract.calculateSharesReceived(ethers.utils.parseEther(amount || '0'));
-          setPlstrReceived(ethers.utils.formatEther(plstr));
-          setFee(ethers.utils.formatEther(fee));
-        } catch (error) {
-          console.error('Calculate PLSTR error:', error);
-        }
-      }
-    };
-    const fetchVplsBalance = async () => {
-      if (account && signer) {
-        try {
-          const stakedPLS = new ethers.Contract(STAKED_PLS_ADDRESS, ERC20ABI, signer);
-          const balance = await stakedPLS.balanceOf(account);
-          setVplsBalance(ethers.utils.formatEther(balance));
-        } catch (error) {
-          console.error('Fetch VPLS balance error:', error);
-        }
-      }
-    };
-    checkApproval();
-    calculatePLSTR();
     fetchVplsBalance();
-  }, [contract, account, amount, signer]);
+  }, [account, signer]);
 
-  const handleApprove = async () => {
-    try {
-      const stakedPLS = new ethers.Contract(STAKED_PLS_ADDRESS, ERC20ABI, signer);
-      const tx = await stakedPLS.approve(contract.address, ethers.utils.parseEther(amount));
-      await tx.wait();
-      setApprovalNeeded(false);
-      alert('Approval successful');
-    } catch (error) {
-      console.error('Approval error:', error);
-      alert('Approval failed');
-    }
-  };
-
-  const handleIssue = async () => {
-    try {
-      const tx = await contract.issueShares(ethers.utils.parseEther(amount));
-      await tx.wait();
-      setAmount('');
-      alert('PLSTR issued successfully');
-    } catch (error) {
-      console.error('Issue error:', error);
-      alert('Failed to issue PLSTR');
-    }
-  };
+  useEffect(() => {
+    calculateShares();
+  }, [amount]);
 
   return (
-    <Card mb={6}>
-      <Box p={4}>
-        <Heading size="md" mb={4}>Issue PLSTR</Heading>
-        <Stack spacing={3}>
-          <Text fontSize="md">Your VPLS Balance: {vplsBalance}</Text>
+    <Box borderWidth="1px" borderRadius="md" p={4} bg="gray.900">
+      <Text fontSize="xl" mb={4}>Issue PLSTR</Text>
+      <VStack spacing={4}>
+        <FormControl>
+          <FormLabel>Amount (VPLS)</FormLabel>
           <Input
-            placeholder="Amount in VPLS"
+            type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            type="number"
-            size="md"
+            placeholder="Enter VPLS amount"
+            bg="gray.800"
+            color="white"
+            borderColor="gray.700"
           />
-          <Text fontSize="sm">You will receive: {plstrReceived} PLSTR (Fee: {fee} VPLS)</Text>
-          {approvalNeeded ? (
-            <Button onClick={handleApprove} isDisabled={!amount} size="md">
-              Approve VPLS
-            </Button>
-          ) : (
-            <Button onClick={handleIssue} isDisabled={!amount} size="md">
-              Issue PLSTR
-            </Button>
-          )}
-        </Stack>
-      </Box>
-    </Card>
+        </FormControl>
+        <Text>
+          Your VPLS Balance: {vplsBalance !== null ? `${vplsBalance} VPLS` : 'Loading...'}
+        </Text>
+        <Text>
+          You will receive: {shares ? `${shares} PLSTR` : '0 PLSTR'} (Fee: {fee ? `${fee} VPLS` : '0 VPLS'})
+        </Text>
+        <Button
+          onClick={handleIssueShares}
+          isLoading={isLoading}
+          isDisabled={!account || !amount || parseFloat(amount) <= 0}
+          colorScheme="teal"
+        >
+          Issue Shares
+        </Button>
+      </VStack>
+    </Box>
   );
-};
+}
 
 export default IssuePLSTR;
