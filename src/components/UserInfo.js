@@ -29,7 +29,6 @@ function UserInfo({ contract, account }) {
     <Box borderWidth="1px" borderRadius="md" p={4} bg="gray.900">
       <Text fontSize="xl" mb={4}>Your PLSTR Info</Text>
       <VStack spacing={2} align="start">
-        <Text>Connected Address: {account}</Text>
         <Text>PLSTR Balance: {plstrBalance !== null ? `${plstrBalance} PLSTR` : 'Loading...'}</Text>
         <Text>Redeemable VPLS: {redeemableVpls !== null ? `${redeemableVpls} VPLS` : 'Loading...'}</Text>
       </VStack>
