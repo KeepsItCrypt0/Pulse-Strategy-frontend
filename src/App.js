@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChakraProvider, Box, Button, Alert, AlertIcon, extendTheme } from '@chakra-ui/react';
+import { ChakraProvider, Box, Button, Alert, AlertIcon, VStack, extendTheme } from '@chakra-ui/react';
 import { ethers } from 'ethers';
 import { RPC_URL, CONTRACT_ADDRESS, STAKED_PLS_ADDRESS } from './config';
 import PulseStrategyABI from './abi/PulseStrategy.json';
@@ -96,7 +96,6 @@ function App() {
           return;
         }
         const tempContract = new ethers.Contract(CONTRACT_ADDRESS, PulseStrategyABI, tempProvider);
-        // Test contract with a simple call
         console.log('Testing contract with totalSupply call...');
         await tempContract.totalSupply();
         setContract(tempContract);
@@ -195,23 +194,25 @@ function App() {
             {connectionError}
           </Alert>
         )}
-        <ContractInfo contract={contract} />
-        {account ? (
-          <>
-            <UserInfo contract={contract} account={account} />
-            <IssuePLSTR contract={contract} account={account} signer={signer} />
-            <RedeemPLSTR contract={contract} account={account} signer={signer} />
-            {isStrategyController && (
-              <AdminPanel contract={contract} account={account} signer={signer} />
-            )}
-            <TransactionHistory contract={contract} account={account} />
-          </>
-        ) : (
-          <Button onClick={connectWallet} size="lg">
-            Connect MetaMask
-          </Button>
-        )}
-        <Disclaimer />
+        <VStack spacing={6}>
+          <ContractInfo contract={contract} />
+          {account ? (
+            <>
+              <UserInfo contract={contract} account={account} />
+              <IssuePLSTR contract={contract} account={account} signer={signer} />
+              <RedeemPLSTR contract={contract} account={account} signer={signer} />
+              {isStrategyController && (
+                <AdminPanel contract={contract} account={account} signer={signer} />
+              )}
+              <TransactionHistory contract={contract} account={account} />
+            </>
+          ) : (
+            <Button onClick={connectWallet} size="lg">
+              Connect MetaMask
+            </Button>
+          )}
+          <Disclaimer />
+        </VStack>
       </Box>
     </ChakraProvider>
   );
