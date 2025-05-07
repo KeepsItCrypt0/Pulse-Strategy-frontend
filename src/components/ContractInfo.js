@@ -1,61 +1,59 @@
-import { useState, useEffect } from 'react';
-import { Box, Heading, Text, Card, Stack, Link } from '@chakra-ui/react';
+import React, { useState, useEffect } from 'react';
+import { Box, Text, VStack } from '@chakra-ui/react';
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS } from '../config';
 
-const formatTimeRemaining = (seconds) => {
-  if (!seconds || seconds === '0') return 'No active issuance period';
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return `Ends in ${days} days, ${hours} hours, ${minutes} minutes`;
-};
+function ContractInfo({ contract }) {
+  const [contractBalance, setContractBalance] = useState(null);
+  const [totalIssued, setTotalIssued] = useState(null);
+  const [remainingIssuance, setRemainingIssuance] = useState(null);
+  const [backingRatio, setBackingRatio] = useState(null);
 
-const ContractInfo = ({ contract }) => {
-  const [vplsBalance, setVplsBalance] = useState('0');
-  const [totalPLSTR, setTotalPLSTR] = useState('0');
-  const [issuancePeriod, setIssuancePeriod] = useState('0');
+  const fetchContractInfo = async () => {
+    if (!contract) return;
+    try {
+      const [balance, remainingPeriod] = await contract.getContractInfo();
+      setContractBalance(ethers.utils.formatUnits(balance, 18));
+      setRemainingIssuance(remainingPeriod.toNumber());
+
+      const total = await contract.totalSupply();
+      setTotalIssued(ethers.utils.formatUnits(total, 18));
+
+      const ratio = await contract.getVPLSBackingRatio();
+      setBackingRatio(ethers.utils.formatUnits(ratio, 18));
+    } catch (error) {
+      console.error('Error fetching contract info:', error.message);
+      setContractBalance('Error');
+      setTotalIssued('Error');
+      setRemainingIssuance('Error');
+      setBackingRatio('Error');
+    }
+  };
+
+  const formatTimeRemaining = (seconds) => {
+    if (seconds <= 0) return 'Ended';
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `Ends in ${days} days, ${hours} hours, ${minutes} minutes`;
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (contract) {
-        try {
-          const { contractBalance: bal, remainingIssuancePeriod: period } = await contract.getContractInfo();
-          setVplsBalance(ethers.utils.formatEther(bal));
-          setIssuancePeriod(period.toString());
-
-          const total = await contract.totalSupply();
-          setTotalPLSTR(ethers.utils.formatEther(total));
-        } catch (error) {
-          console.error('Contract info fetch error:', error);
-        }
-      }
-    };
-    fetchData();
+    fetchContractInfo();
   }, [contract]);
 
   return (
-    <Card mb={6}>
-      <Box p={4}>
-        <Heading size="md" mb={4}>Contract Info</Heading>
-        <Stack spacing={3}>
-          <Text fontSize="md">
-            PulseStrategy Contract:{' '}
-            <Link
-              href={`https://etherscan.io/address/${CONTRACT_ADDRESS}`}
-              isExternal
-              color="brand.link"
-            >
-              {CONTRACT_ADDRESS}
-            </Link>
-          </Text>
-          <Text fontSize="md">VPLS Contract Balance: {vplsBalance}</Text>
-          <Text fontSize="md">Total PLSTR Issued: {totalPLSTR}</Text>
-          <Text fontSize="md">Issuance Period: {formatTimeRemaining(issuancePeriod)}</Text>
-        </Stack>
-      </Box>
-    </Card>
+    <Box borderWidth="1px" borderRadius="md" p={4} bg="gray.900">
+      <Text fontSize="xl" mb={4}>Contract Info</Text>
+      <VStack spacing={2} align="start">
+        <Text>Contract Address: {CONTRACT_ADDRESS}</Text>
+        <Text>VPLS Balance: {contractBalance !== null ? `${contractBalance} VPLS` : 'Loading...'}</Text>
+        <Text>Total PLSTR Issued: {totalIssued !== null ? `${totalIssued} PLSTR` : 'Loading...'}</Text>
+        <Text>Issuance Period: {remainingIssuance !== null ? formatTimeRemaining(remainingIssuance) : 'Loading...'}</Text>
+        <Text>VPLS Backing Ratio: {backingRatio !== null ? `${backingRatio}` : 'Loading...'}</Text>
+      </VStack>
+    </Box>
   );
-};
+}
 
 export default ContractInfo;
