@@ -89,9 +89,10 @@ function App() {
     initializeProvider();
     if (window.ethereum) {
       window.ethereum.on('chainChanged', (chainId) => {
-        console.log('Chain changed:', chainId);
-        if (parseInt(chainId, 16) !== 1) {
-          setNetworkError('Network changed. Please switch back to Ethereum Mainnet.');
+        const newChainId = parseInt(chainId, 16);
+        console.log('Chain changed:', { chainId, newChainId });
+        if (newChainId !== 1) {
+          setNetworkError(`Network changed to chainId ${newChainId}. Please switch to Ethereum Mainnet.`);
         } else {
           setNetworkError('');
           if (account) connectWallet(); // Reconnect if network is correct
@@ -116,11 +117,18 @@ function App() {
       const network = await web3Provider.getNetwork();
       console.log('Detected network:', network);
       if (network.chainId !== 1) {
+        console.log('Attempting to switch to Ethereum Mainnet');
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: '0x1' }],
           });
+          // Re-check network after switch
+          const newNetwork = await web3Provider.getNetwork();
+          if (newNetwork.chainId !== 1) {
+            setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually in MetaMask.');
+            return;
+          }
         } catch (switchError) {
           console.error('Network switch error:', switchError);
           setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually in MetaMask.');
