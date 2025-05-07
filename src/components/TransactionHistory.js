@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Heading, List, ListItem, Text } from '@chakra-ui/react';
+import { Box, Heading, List, ListItem, Text, Card } from '@chakra-ui/react';
 import { ethers } from 'ethers';
 
 const TransactionHistory = ({ contract, account }) => {
@@ -26,22 +26,24 @@ const TransactionHistory = ({ contract, account }) => {
   }, [contract, account]);
 
   return (
-    <Box mb={6}>
-      <Heading size="md" mb={2}>Transaction History</Heading>
-      <List spacing={2}>
-        {events.map((event, index) => (
-          <ListItem key={index}>
-            <Text>
-              {event.event === 'SharesIssued' ? 'Issued' : 'Redeemed'}:{" "}
-              {ethers.utils.formatEther(event.args.shares)} PLSTR
-              {event.args.stakedPLS && `, ${ethers.utils.formatEther(event.args.stakedPLS)} VPLS`}
-              {' '}
-              (Block: {event.blockNumber})
-            </Text>
-          </ListItem>
-        ))}
-      </List>
-    </Box>
+    <Card mb={6}>
+      <Box p={4}>
+        <Heading size="md" mb={4}>PLSTR Transaction History</Heading>
+        <List spacing={3}>
+          {events.map((event, index) => (
+            <ListItem key={index}>
+              <Text fontSize="md">
+                {event.event === 'SharesIssued' ? 'Issued' : 'Redeemed'}:{" "}
+                {ethers.utils.formatEther(event.args.shares)} PLSTR
+                {event.args.stakedPLS && `, ${ethers.utils.formatEther(event.args.stakedPLS)} VPLS`}
+                {' '}
+                (Block: {event.blockNumber})
+              </Text>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+    </Card>
   );
 };
 
