@@ -12,7 +12,7 @@ function IssuePLSTR({ contract, account, signer }) {
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
 
-  const fetchVplsBalance = async () => {
+  const fetchVplsBalance = async (retryCount = 0) => {
     if (!account) {
       console.log('No account connected for VPLS balance fetch');
       setVplsBalance(null);
@@ -20,11 +20,15 @@ function IssuePLSTR({ contract, account, signer }) {
     }
     try {
       let provider = signer || new ethers.providers.JsonRpcProvider(RPC_URL);
-      console.log('Fetching VPLS balance for account:', account, 'with provider:', provider.connection.url);
+      console.log('Fetching VPLS balance', {
+        account,
+        provider: provider.connection.url,
+        contractAddress: STAKED_PLS_ADDRESS,
+        retryAttempt: retryCount + 1
+      });
       const vplsContract = new ethers.Contract(STAKED_PLS_ADDRESS, ERC20ABI, provider);
       const balance = await vplsContract.balanceOf(account);
-      const decimals = await vplsContract.decimals();
-      const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+      const formattedBalance = ethers.utils.formatUnits(balance, 18); // Assume 18 decimals
       console.log('VPLS Balance fetched:', formattedBalance, 'VPLS');
       setVplsBalance(formattedBalance);
     } catch (error) {
@@ -32,16 +36,22 @@ function IssuePLSTR({ contract, account, signer }) {
         message: error.message,
         code: error.code,
         data: error.data,
-        stack: error.stack
+        stack: error.stack,
+        contractAddress: STAKED_PLS_ADDRESS
       });
-      setVplsBalance('Error');
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch VPLS balance. Check console for details.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+      if (retryCount < 2) {
+        console.log('Retrying VPLS balance fetch, attempt:', retryCount + 2);
+        setTimeout(() => fetchVplsBalance(retryCount + 1), 2000);
+      } else {
+        setVplsBalance('Error');
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch VPLS balance. Check console for details.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     }
   };
 
