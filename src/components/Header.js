@@ -1,8 +1,8 @@
-import { Box, Image, Link, Button, Flex } from '@chakra-ui/react';
+import { Box, Image, Link, Flex } from '@chakra-ui/react';
 
 const Header = ({ account, connectWallet }) => (
   <Flex mb={8} justify="space-between" align="center">
-    <Image src="/logo.png" alt="PulseStrategy Logo" boxSize="60px" />
+    <Image src="/logo.png" alt="PulseStrategy Logo" boxSize="70px" />
     <Box>
       <Link
         href="https://x.com/pulsestrategy"
@@ -11,13 +11,8 @@ const Header = ({ account, connectWallet }) => (
         color="brand.link"
         fontSize="md"
       >
-        X @pulsestrategy
+        @pulsestrategy
       </Link>
-      {!account && (
-        <Button onClick={connectWallet} size="md">
-          Connect MetaMask
-        </Button>
-      )}
     </Box>
   </Flex>
 );
