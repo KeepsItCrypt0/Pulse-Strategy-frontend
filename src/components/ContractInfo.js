@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Text, VStack } from '@chakra-ui/react';
+import { Box, Text, VStack, Link } from '@chakra-ui/react';
 import { ethers } from 'ethers';
-import { CONTRACT_ADDRESS } from '../config';
+import { CONTRACT_ADDRESS, STAKED_PLS_ADDRESS } from '../config';
 
 function ContractInfo({ contract }) {
   const [contractBalance, setContractBalance] = useState(null);
   const [totalIssued, setTotalIssued] = useState(null);
   const [remainingIssuance, setRemainingIssuance] = useState(null);
   const [backingRatio, setBackingRatio] = useState(null);
+
+  const truncateAddress = (address) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
 
   const fetchContractInfo = async () => {
     if (!contract) return;
@@ -46,8 +50,18 @@ function ContractInfo({ contract }) {
     <Box borderWidth="1px" borderRadius="md" p={4} bg="gray.900">
       <Text fontSize="xl" mb={4}>Contract Info</Text>
       <VStack spacing={2} align="start">
-        <Text>Contract Address: {CONTRACT_ADDRESS}</Text>
-        <Text>VPLS Balance: {contractBalance !== null ? `${contractBalance} VPLS` : 'Loading...'}</Text>
+        <Text>
+          Contract Address:{' '}
+          <Link href="https://etherscan.io/address/0x6c1dA678A1B615f673208e74AB3510c22117090e" isExternal color="teal.300">
+            {truncateAddress(CONTRACT_ADDRESS)}
+          </Link>
+        </Text>
+        <Text>
+          VPLS Balance: {contractBalance !== null ? `${contractBalance} VPLS` : 'Loading...'} (
+          <Link href="https://etherscan.io/address/0x0181e249c507d3b454dE2444444f0Bf5dBE72d09" isExternal color="teal.300">
+            {truncateAddress(STAKED_PLS_ADDRESS)}
+          </Link>)
+        </Text>
         <Text>Total PLSTR Issued: {totalIssued !== null ? `${totalIssued} PLSTR` : 'Loading...'}</Text>
         <Text>Issuance Period: {remainingIssuance !== null ? formatTimeRemaining(remainingIssuance) : 'Loading...'}</Text>
         <Text>VPLS Backing Ratio: {backingRatio !== null ? `${backingRatio}` : 'Loading...'}</Text>
