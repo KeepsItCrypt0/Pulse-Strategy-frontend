@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChakraProvider, Box, Button, Alert, AlertIcon, extendTheme } from '@chakra-ui/react';
 import { ethers } from 'ethers';
-import { RPC_URLS, DEFAULT_RPC, CONTRACT_ADDRESS, CONTRACT_ABI } from './config';
+import { RPC_URL, CONTRACT_ADDRESS, CONTRACT_ABI } from './config';
 import Header from './components/Header';
 import Disclaimer from './components/Disclaimer';
 import UserInfo from './components/UserInfo';
@@ -77,57 +77,30 @@ function App() {
   const [connectionError, setConnectionError] = useState('');
 
   const initializeProvider = async () => {
-    console.log('Initializing provider...');
-    for (let i = 0; i < RPC_URLS.length; i++) {
-      const { name, url } = RPC_URLS[i];
-      console.log(`Attempting to connect to ${name}: ${url}`);
-      try {
-        const tempProvider = new ethers.providers.JsonRpcProvider(url);
-        // Test the provider with a timeout
-        const network = await Promise.race([
-          tempProvider.getNetwork(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('RPC timeout')), 5000)
-          )
-        ]);
-        if (network.chainId !== 1) {
-          console.error(`${name} connected to wrong chain: ${network.chainId}`);
-          continue;
-        }
-        console.log(`Successfully connected to ${name}`);
-        setProvider(tempProvider);
-        try {
-          const tempContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, tempProvider);
-          // Test contract with a simple call
-          await tempContract.totalSupply();
-          setContract(tempContract);
-          setConnectionError('');
-          return; // Exit on success
-        } catch (contractError) {
-          console.error(`Contract initialization failed with ${name}:`, contractError);
-          continue;
-        }
-      } catch (error) {
-        console.error(`Failed to connect to ${name}:`, error.message);
-      }
-    }
-    // Fallback to default RPC (Alchemy)
-    console.log('All RPCs failed, falling back to default:', DEFAULT_RPC);
+    console.log('Initializing provider with RPC:', RPC_URL);
     try {
-      const fallbackProvider = new ethers.providers.JsonRpcProvider(DEFAULT_RPC);
-      const network = await fallbackProvider.getNetwork();
+      const tempProvider = new ethers.providers.JsonRpcProvider(RPC_URL);
+      const network = await tempProvider.getNetwork();
       if (network.chainId !== 1) {
-        throw new Error('Default RPC connected to wrong chain');
+        console.error('Provider connected to wrong chain:', network.chainId);
+        setConnectionError('RPC provider is not on Ethereum Mainnet. Please contact support.');
+        return;
       }
-      setProvider(fallbackProvider);
-      const fallbackContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, fallbackProvider);
-      await fallbackContract.totalSupply();
-      setContract(fallbackContract);
-      setConnectionError('');
-      console.log('Successfully connected to default RPC');
+      console.log('Provider connected successfully');
+      setProvider(tempProvider);
+      try {
+        const tempContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, tempProvider);
+        // Test contract with a simple call
+        await tempContract.totalSupply();
+        setContract(tempContract);
+        console.log('Contract initialized successfully');
+      } catch (contractError) {
+        console.error('Contract initialization failed:', contractError.message);
+        setConnectionError('Failed to initialize contract. Please check the contract address or ABI.');
+      }
     } catch (error) {
-      console.error('Default RPC failed:', error.message);
-      setConnectionError('Unable to connect to any RPC provider. Please check your internet connection or try again later.');
+      console.error('Provider initialization failed:', error.message);
+      setConnectionError('Unable to connect to RPC provider. Please check your internet connection or try again later.');
     }
   };
 
