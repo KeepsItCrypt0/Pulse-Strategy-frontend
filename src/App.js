@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChakraProvider, Box, Button, Text, Alert, AlertIcon, Link, extendTheme } from '@chakra-ui/react';
+import { ChakraProvider, Box, Button, Alert, AlertIcon, extendTheme } from '@chakra-ui/react';
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, CONTRACT_ABI, INFURA_URL } from './config';
 import Header from './components/Header';
@@ -9,8 +9,9 @@ import IssuePLSTR from './components/IssuePLSTR';
 import RedeemPLSTR from './components/RedeemPLSTR';
 import AdminPanel from './components/AdminPanel';
 import TransactionHistory from './components/TransactionHistory';
+import ContractInfo from './components/ContractInfo';
 
-// Define dark mode theme
+// Define dark mode theme with gradient
 const theme = extendTheme({
   config: {
     initialColorMode: 'dark',
@@ -19,8 +20,9 @@ const theme = extendTheme({
   styles: {
     global: {
       body: {
-        bg: 'black',
+        bg: 'linear-gradient(135deg, #4B0000, #00004B)',
         color: 'white',
+        minHeight: '100vh',
       },
     },
   },
@@ -92,10 +94,10 @@ function App() {
         const newChainId = parseInt(chainId, 16);
         console.log('Chain changed:', { chainId, newChainId });
         if (newChainId !== 1) {
-          setNetworkError(`Network changed to chainId ${newChainId}. Please switch to Ethereum Mainnet.`);
+          setNetworkError(`Network changed to chainId ${newChainId}. Please switch to Ethereum Mainnet and remove unknown networks from MetaMask.`);
         } else {
           setNetworkError('');
-          if (account) connectWallet(); // Reconnect if network is correct
+          if (account) connectWallet();
         }
       });
     }
@@ -123,15 +125,14 @@ function App() {
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: '0x1' }],
           });
-          // Re-check network after switch
           const newNetwork = await web3Provider.getNetwork();
           if (newNetwork.chainId !== 1) {
-            setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually in MetaMask.');
+            setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually and remove chainId 1936529372 if present.');
             return;
           }
         } catch (switchError) {
           console.error('Network switch error:', switchError);
-          setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually in MetaMask.');
+          setNetworkError('Failed to switch to Ethereum Mainnet. Please switch manually and remove chainId 1936529372 if present.');
           return;
         }
       }
@@ -158,16 +159,6 @@ function App() {
     <ChakraProvider theme={theme}>
       <Box p={6} maxW="900px" mx="auto">
         <Header account={account} connectWallet={connectWallet} />
-        <Text fontSize="md" mb={6}>
-          PulseStrategy Contract:{' '}
-          <Link
-            href={`https://etherscan.io/address/${CONTRACT_ADDRESS}`}
-            isExternal
-            color="brand.link"
-          >
-            {CONTRACT_ADDRESS}
-          </Link>
-        </Text>
         {networkError && (
           <Alert status="error" mb={6} borderRadius="md">
             <AlertIcon />
@@ -180,9 +171,9 @@ function App() {
             {connectionError}
           </Alert>
         )}
+        <ContractInfo contract={contract} />
         {account ? (
           <>
-            <Text fontSize="md" mb={6}>Connected: {account}</Text>
             <UserInfo contract={contract} account={account} />
             <IssuePLSTR contract={contract} account={account} signer={signer} />
             <RedeemPLSTR contract={contract} account={account} signer={signer} />
