@@ -6,7 +6,6 @@ const UserInfo = ({ contract, account }) => {
   const [plstrBalance, setPlstrBalance] = useState('0');
   const [redeemableVPLS, setRedeemableVPLS] = useState('0');
   const [contractBalance, setContractBalance] = useState('0');
-  const [issuancePeriod, setIssuancePeriod] = useState('0');
   const [vplsRatio, setVplsRatio] = useState('0');
 
   useEffect(() => {
@@ -19,9 +18,8 @@ const UserInfo = ({ contract, account }) => {
           const redeemable = await contract.getRedeemableStakedPLS(account, balance);
           setRedeemableVPLS(ethers.utils.formatEther(redeemable));
 
-          const { contractBalance: bal, remainingIssuancePeriod: period } = await contract.getContractInfo();
+          const { contractBalance: bal } = await contract.getContractInfo();
           setContractBalance(ethers.utils.formatEther(bal));
-          setIssuancePeriod(period.toString());
 
           const ratio = await contract.getVPLSBackingRatio();
           setVplsRatio(ethers.utils.formatEther(ratio));
@@ -42,7 +40,6 @@ const UserInfo = ({ contract, account }) => {
           <Text fontSize="md">PLSTR Balance: {plstrBalance}</Text>
           <Text fontSize="md">Redeemable VPLS: {redeemableVPLS}</Text>
           <Text fontSize="md">Contract VPLS Balance: {contractBalance}</Text>
-          <Text fontSize="md">Remaining Issuance Period: {issuancePeriod} seconds</Text>
           <Text fontSize="md">VPLS Backing Ratio: {vplsRatio}</Text>
         </Stack>
       </Box>
