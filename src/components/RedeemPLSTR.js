@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 const RedeemPLSTR = ({ contract, account, signer }) => {
   const [amount, setAmount] = useState('');
   const [estimatedVPLS, setEstimatedVPLS] = useState('0');
+  const [plstrBalance, setPlstrBalance] = useState('0');
 
   useEffect(() => {
     const calculateVPLS = async () => {
@@ -17,7 +18,18 @@ const RedeemPLSTR = ({ contract, account, signer }) => {
         }
       }
     };
+    const fetchPlstrBalance = async () => {
+      if (contract && account) {
+        try {
+          const balance = await contract.balanceOf(account);
+          setPlstrBalance(ethers.utils.formatEther(balance));
+        } catch (error) {
+          console.error('Fetch PLSTR balance error:', error);
+        }
+      }
+    };
     calculateVPLS();
+    fetchPlstrBalance();
   }, [contract, account, amount]);
 
   const handleRedeem = async () => {
@@ -37,12 +49,11 @@ const RedeemPLSTR = ({ contract, account, signer }) => {
       <Box p={4}>
         <Heading size="md" mb={4}>Redeem PLSTR</Heading>
         <Stack spacing={3}>
+          <Text fontSize="md">Your PLSTR Balance: {plstrBalance}</Text>
           <Input
             placeholder="Amount in PLSTR"
             value={amount}
-            onChange={(e) => setAmount(e
-
-.target.value)}
+            onChange={(e) => setAmount(e.target.value)}
             type="number"
             size="md"
           />
