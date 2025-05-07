@@ -8,7 +8,7 @@ const Header = ({ account, connectWallet }) => (
         href="https://x.com/pulsestrategy"
         isExternal
         mr={4}
-        color="blue.500"
+        color="blue.300"
       >
         X @pulsestrategy
       </Link>
