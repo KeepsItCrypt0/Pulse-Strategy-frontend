@@ -53,7 +53,7 @@ const IssuePLSTR = ({ contract, account, signer }) => {
       await tx.wait();
       setAmount('');
       alert('PLSTR issued successfully');
-    } IssuePLSTR(error) {
+    } catch (error) {
       console.error('Issue error:', error);
       alert('Failed to issue PLSTR');
     }
