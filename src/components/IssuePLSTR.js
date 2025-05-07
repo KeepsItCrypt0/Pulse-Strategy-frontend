@@ -9,6 +9,7 @@ const IssuePLSTR = ({ contract, account, signer }) => {
   const [approvalNeeded, setApprovalNeeded] = useState(false);
   const [plstrReceived, setPlstrReceived] = useState('0');
   const [fee, setFee] = useState('0');
+  const [vplsBalance, setVplsBalance] = useState('0');
 
   useEffect(() => {
     const checkApproval = async () => {
@@ -30,8 +31,20 @@ const IssuePLSTR = ({ contract, account, signer }) => {
         }
       }
     };
+    const fetchVplsBalance = async () => {
+      if (account && signer) {
+        try {
+          const stakedPLS = new ethers.Contract(STAKED_PLS_ADDRESS, ERC20ABI, signer);
+          const balance = await stakedPLS.balanceOf(account);
+          setVplsBalance(ethers.utils.formatEther(balance));
+        } catch (error) {
+          console.error('Fetch VPLS balance error:', error);
+        }
+      }
+    };
     checkApproval();
     calculatePLSTR();
+    fetchVplsBalance();
   }, [contract, account, amount, signer]);
 
   const handleApprove = async () => {
@@ -64,6 +77,7 @@ const IssuePLSTR = ({ contract, account, signer }) => {
       <Box p={4}>
         <Heading size="md" mb={4}>Issue PLSTR</Heading>
         <Stack spacing={3}>
+          <Text fontSize="md">Your VPLS Balance: {vplsBalance}</Text>
           <Input
             placeholder="Amount in VPLS"
             value={amount}
