@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Heading, Input, Button } from '@chakra-ui/react';
+import { Box, Heading, Input, Button, Card, Stack } from '@chakra-ui/react';
 import { ethers } from 'ethers';
 import { STAKED_PLS_ADDRESS } from '../config';
 import ERC20ABI from '../abi/ERC20.json';
@@ -46,25 +46,29 @@ const DepositStakedPLS = ({ contract, account, signer }) => {
   };
 
   return (
-    <Box mb={4}>
-      <Heading size="sm" mb={2}>Deposit VPLS</Heading>
-      <Input
-        placeholder="Amount in VPLS"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        mb={2}
-        type="number"
-      />
-      {approvalNeeded ? (
-        <Button colorScheme="green" onClick={handleApprove} isDisabled={!amount}>
-          Approve VPLS
-        </Button>
-      ) : (
-        <Button colorScheme="blue" onClick={handleDeposit} isDisabled={!amount}>
-          Deposit
-        </Button>
-      )}
-    </Box>
+    <Card mb={4}>
+      <Box p={4}>
+        <Heading size="sm" mb={4}>Deposit VPLS</Heading>
+        <Stack spacing={3}>
+          <Input
+            placeholder="Amount in VPLS"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            type="number"
+            size="md"
+          />
+          {approvalNeeded ? (
+            <Button onClick={handleApprove} isDisabled={!amount} size="md">
+              Approve VPLS
+            </Button>
+          ) : (
+            <Button onClick={handleDeposit} isDisabled={!amount} size="md">
+              Deposit
+            </Button>
+          )}
+        </Stack>
+      </Box>
+    </Card>
   );
 };
 
