@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChakraProvider, Box, Button, Alert, AlertIcon, extendTheme } from '@chakra-ui/react';
 import { ethers } from 'ethers';
-import { CONTRACT_ADDRESS, CONTRACT_ABI, INFURA_URL } from './config';
+import { RPC_URLS, CONTRACT_ADDRESS, CONTRACT_ABI } from './config';
 import Header from './components/Header';
 import Disclaimer from './components/Disclaimer';
 import UserInfo from './components/UserInfo';
@@ -76,14 +76,24 @@ function App() {
   const [networkError, setNetworkError] = useState('');
   const [connectionError, setConnectionError] = useState('');
 
-  const initializeProvider = () => {
-    try {
-      const infuraProvider = new ethers.providers.JsonRpcProvider(INFURA_URL);
-      setProvider(infuraProvider);
-      setContract(new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, infuraProvider));
-    } catch (error) {
-      console.error('Infura provider error:', error);
-      setConnectionError('Failed to initialize provider. Please refresh the page.');
+  const initializeProvider = async () => {
+    for (let i = 0; i < RPC_URLS.length; i++) {
+      const rpcUrl = RPC_URLS[i];
+      try {
+        const tempProvider = new ethers.providers.JsonRpcProvider(rpcUrl);
+        // Test the provider with a simple call
+        await tempProvider.getNetwork();
+        console.log(`Connected to RPC: ${rpcUrl}`);
+        setProvider(tempProvider);
+        setContract(new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, tempProvider));
+        setConnectionError('');
+        return; // Exit loop on success
+      } catch (error) {
+        console.error(`Failed to connect to RPC ${rpcUrl}:`, error);
+        if (i === RPC_URLS.length - 1) {
+          setConnectionError('All RPC providers failed. Please check your internet connection or try again later.');
+        }
+      }
     }
   };
 
